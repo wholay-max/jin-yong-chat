@@ -1,0 +1,12 @@
+# Node.js 依赖
+node_modules/
+
+# npm 锁文件
+package-lock.json
+
+# 环境变量文件（包含 API Key，绝对不能提交！）
+.env
+
+# 系统文件
+.DS_Store
+Thumbs.db

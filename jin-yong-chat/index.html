@@ -1,0 +1,2179 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金庸群侠聊天室</title>
+    <style>
+        /* ===== 全局样式 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+            background: #1a0a00;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* gzhi== */
+        .app-container {
+            width: 1200px;
+            max-width: 100%;
+            height: 90vh;
+            display: flex;
+            gap: 16px;
+            background: linear-gradient(135deg, #2a1a0a 0%, #1a0a00 100%);
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 0 60px rgba(200, 150, 50, 0.15), inset 0 0 60px rgba(0,0,0,0.3);
+            border: 1px solid rgba(200, 150, 50, 0.2);
+        }
+
+        /* ===== 左侧面板 - 角色列表 ===== */
+        .sidebar {
+            width: 260px;
+            min-width: 260px;
+            background: rgba(30, 15, 5, 0.8);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(200, 150, 50, 0.15);
+        }
+
+        .sidebar-title {
+            color: #d4a84b;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(200, 150, 50, 0.2);
+            margin-bottom: 12px;
+            text-shadow: 0 0 10px rgba(200, 150, 50, 0.3);
+            letter-spacing: 4px;
+        }
+
+        .character-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .character-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .character-list::-webkit-scrollbar-thumb {
+            background: rgba(200, 150, 50, 0.3);
+            border-radius: 2px;
+        }
+
+        .character-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(50, 30, 15, 0.5);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+        .character-card:hover {
+            background: rgba(70, 45, 25, 0.6);
+            border-color: rgba(200, 150, 50, 0.3);
+        }
+        .character-card.selected {
+            background: rgba(80, 55, 30, 0.7);
+            border-color: #d4a84b;
+            box-shadow: 0 0 15px rgba(200, 150, 50, 0.15);
+        }
+
+        .character-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            border: 2px solid rgba(200, 150, 50, 0.3);
+        }
+
+        .character-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .character-name {
+            color: #e8d5a0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .character-title {
+            color: #a08060;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .character-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #d4a84b;
+            cursor: pointer;
+        }
+
+        .sidebar-actions {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(200, 150, 50, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #d4a84b, #b8860b);
+            color: #1a0a00;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(200, 150, 50, 0.3);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #8b3a3a, #5c1a1a);
+            color: #e8d5a0;
+        }
+        .btn-danger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(139, 58, 58, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(80, 55, 30, 0.6);
+            color: #d4a84b;
+            border: 1px solid rgba(200, 150, 50, 0.2);
+        }
+        .btn-secondary:hover {
+            background: rgba(100, 70, 40, 0.7);
+        }
+
+        /* ===== 右侧主区域 ===== */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        /* ===== 聊天头部 ===== */
+        .chat-header {
+            background: rgba(30, 15, 5, 0.8);
+            border-radius: 14px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(200, 150, 50, 0.15);
+        }
+
+        .chat-header-title {
+            color: #d4a84b;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-header-title .icon {
+            font-size: 22px;
+        }
+
+        .chat-status {
+            color: #a08060;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .chat-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .chat-status .dot.online {
+            background: #4caf50;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+        }
+        .chat-status .dot.offline {
+            background: #666;
+        }
+        .chat-status .dot.thinking {
+            background: #d4a84b;
+            animation: pulse 0.8s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        /* ===== 聊天消息区域 ===== */
+        .chat-messages {
+            flex: 1;
+            background: rgba(20, 10, 5, 0.6);
+            border-radius: 14px;
+            padding: 20px;
+            overflow-y: auto;
+            border: 1px solid rgba(200, 150, 50, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(200, 150, 50, 0.2);
+            border-radius: 2px;
+        }
+
+        /* ===== 消息气泡 ===== */
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+            border: 2px solid rgba(200, 150, 50, 0.3);
+        }
+
+        .message-content {
+            background: rgba(40, 25, 12, 0.8);
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid rgba(200, 150, 50, 0.1);
+        }
+
+        .message.user .message-content {
+            background: rgba(60, 40, 20, 0.8);
+            border-color: rgba(200, 150, 50, 0.2);
+        }
+
+        .message-name {
+            color: #d4a84b;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .message.user .message-name {
+            color: #e8c86a;
+        }
+
+        .message-text {
+            color: #e0d0b8;
+            font-size: 14px;
+            line-height: 1.7;
+            word-break: break-word;
+        }
+
+        .message-time {
+            color: #6a5a4a;
+            font-size: 11px;
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        /* ===== 系统消息 ===== */
+        .message.system {
+            align-self: center;
+            max-width: 100%;
+        }
+        .message.system .message-content {
+            background: rgba(30, 20, 10, 0.6);
+            border-color: rgba(200, 150, 50, 0.1);
+            text-align: center;
+            padding: 8px 20px;
+        }
+        .message.system .message-text {
+            color: #a08060;
+            font-size: 13px;
+        }
+
+        /* ===== 输入区域 ===== */
+        .chat-input-area {
+            background: rgba(30, 15, 5, 0.8);
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            border: 1px solid rgba(200, 150, 50, 0.15);
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(20, 10, 5, 0.6);
+            border: 1px solid rgba(200, 150, 50, 0.15);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #e0d0b8;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            min-height: 42px;
+            max-height: 120px;
+            transition: border-color 0.3s;
+        }
+        .chat-input:focus {
+            border-color: rgba(200, 150, 50, 0.4);
+        }
+        .chat-input::placeholder {
+            color: #6a5a4a;
+        }
+
+        .btn-send {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #d4a84b, #b8860b);
+            color: #1a0a00;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .btn-send:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(200, 150, 50, 0.3);
+        }
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== 回合计数器 ===== */
+        .round-counter {
+            color: #a08060;
+            font-size: 12px;
+            text-align: center;
+            padding: 4px;
+        }
+
+        /* ===== 手机端 - 角色选择面板（底部弹出） ===== */
+        .mobile-char-btn {
+            display: none;
+        }
+        
+        .mobile-char-overlay {
+            display: none;
+        }
+
+        /* ===== 响应式 - 手机端 ===== */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+            .app-container {
+                flex-direction: column;
+                height: 100vh;
+                width: 100%;
+                border-radius: 0;
+                padding: 8px;
+                gap: 8px;
+                border: none;
+            }
+            
+            /* 手机端隐藏侧栏，用底部弹出面板代替 */
+            .sidebar {
+                display: none;
+            }
+            
+            /* 手机端顶部工具栏 */
+            .mobile-char-btn {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 14px;
+                background: rgba(80, 55, 30, 0.6);
+                color: #d4a84b;
+                border: 1px solid rgba(200, 150, 50, 0.2);
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: bold;
+                cursor: pointer;
+                font-family: inherit;
+                white-space: nowrap;
+            }
+            .mobile-char-btn:active {
+                background: rgba(100, 70, 40, 0.7);
+            }
+            
+            /* 手机端底部弹出角色面板 */
+            .mobile-char-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.6);
+                z-index: 999;
+                justify-content: flex-end;
+                align-items: flex-end;
+            }
+            .mobile-char-overlay.active {
+                display: flex;
+            }
+            .mobile-char-panel {
+                background: linear-gradient(180deg, #2a1a0a, #1a0a00);
+                border-radius: 20px 20px 0 0;
+                padding: 16px 16px 30px;
+                width: 100%;
+                max-height: 70vh;
+                border-top: 1px solid rgba(200, 150, 50, 0.2);
+                animation: slideUp 0.3s ease;
+                display: flex;
+                flex-direction: column;
+            }
+            @keyframes slideUp {
+                from { transform: translateY(100%); }
+                to { transform: translateY(0); }
+            }
+            .mobile-char-panel .panel-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding-bottom: 12px;
+                border-bottom: 1px solid rgba(200, 150, 50, 0.15);
+                margin-bottom: 12px;
+            }
+            .mobile-char-panel .panel-title {
+                color: #d4a84b;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            .mobile-char-panel .panel-close {
+                color: #a08060;
+                font-size: 22px;
+                cursor: pointer;
+                padding: 4px 8px;
+                background: none;
+                border: none;
+                font-family: inherit;
+            }
+            .mobile-char-panel .character-list {
+                flex: 1;
+                overflow-y: auto;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .mobile-char-panel .character-card {
+                padding: 8px 10px;
+            }
+            .mobile-char-panel .character-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+            .mobile-char-panel .character-name {
+                font-size: 12px;
+            }
+            .mobile-char-panel .character-title {
+                font-size: 10px;
+            }
+            .mobile-char-panel .character-checkbox {
+                width: 16px;
+                height: 16px;
+            }
+            .mobile-char-panel .panel-actions {
+                display: flex;
+                gap: 8px;
+                margin-top: 12px;
+                padding-top: 12px;
+                border-top: 1px solid rgba(200, 150, 50, 0.15);
+            }
+            .mobile-char-panel .panel-actions .btn {
+                flex: 1;
+                font-size: 13px;
+                padding: 10px;
+            }
+            
+            /* 手机端工具栏 - 在手机宽度时显示 */
+            .mobile-toolbar {
+                display: flex !important;
+                gap: 6px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+            
+            /* 聊天头部手机适配 - 精简布局 */
+            .chat-header {
+                padding: 6px 10px;
+                border-radius: 8px;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            .chat-header-title {
+                font-size: 13px;
+            }
+            .chat-header-title .icon {
+                font-size: 16px;
+            }
+            .chat-status {
+                font-size: 10px;
+                gap: 3px;
+            }
+            #modeBadge {
+                font-size: 9px !important;
+                padding: 1px 4px !important;
+                margin-left: 3px !important;
+            }
+            #statusText {
+                font-size: 10px;
+            }
+            
+            /* 手机端工具栏 - 紧凑排列 */
+            .mobile-toolbar {
+                display: flex !important;
+                gap: 4px;
+                align-items: center;
+                flex-wrap: nowrap;
+                width: 100%;
+                justify-content: flex-start;
+                padding-top: 4px;
+                border-top: 1px solid rgba(200,150,50,0.1);
+                margin-top: 2px;
+            }
+            .mobile-char-btn {
+                padding: 5px 8px;
+                font-size: 11px;
+                gap: 3px;
+            }
+            .mobile-toolbar .btn {
+                padding: 5px 8px !important;
+                font-size: 11px !important;
+                flex-shrink: 0;
+            }
+            .mobile-toolbar .btn-primary,
+            .mobile-toolbar .btn-danger,
+            .mobile-toolbar .btn-secondary {
+                padding: 5px 8px !important;
+                font-size: 11px !important;
+            }
+            
+            /* 手机端按钮点击反馈 */
+            .mobile-toolbar .btn:active,
+            .mobile-char-btn:active {
+                transform: scale(0.92) !important;
+                transition: transform 0.1s ease !important;
+            }
+            .mobile-toolbar .btn-primary:active {
+                box-shadow: 0 0 20px rgba(200,150,50,0.5) !important;
+            }
+            .mobile-toolbar .btn-danger:active {
+                box-shadow: 0 0 20px rgba(139,58,58,0.5) !important;
+            }
+            .mobile-toolbar .btn-secondary:active {
+                box-shadow: 0 0 15px rgba(200,150,50,0.3) !important;
+            }
+
+
+            
+            /* 聊天区域手机适配 */
+            .chat-messages {
+                padding: 12px;
+                border-radius: 10px;
+                gap: 10px;
+            }
+            .message {
+                max-width: 98%;
+                gap: 8px;
+            }
+            .message-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+            .message-content {
+                padding: 10px 12px;
+                border-radius: 10px;
+            }
+            .message-text {
+                font-size: 13px;
+                line-height: 1.6;
+            }
+            .message-name {
+                font-size: 11px;
+            }
+            .message-time {
+                font-size: 10px;
+            }
+            
+            /* 输入区域手机适配 */
+            .chat-input-area {
+                padding: 8px 10px;
+                border-radius: 10px;
+                gap: 8px;
+            }
+            .chat-input {
+                font-size: 13px;
+                padding: 8px 12px;
+                min-height: 36px;
+            }
+            .btn-send {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            
+            /* 按钮手机适配 */
+            .btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            /* 回合计数器 */
+            .round-counter {
+                font-size: 11px;
+            }
+            
+            /* 设置弹窗手机适配 */
+            .modal {
+                padding: 20px;
+                width: 95%;
+            }
+            .modal-title {
+                font-size: 17px;
+            }
+        }
+
+
+        /* ===== 打字指示器 ===== */
+        .typing-indicator {
+            align-self: flex-start;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 8px 0;
+            animation: fadeIn 0.3s ease;
+        }
+        .typing-indicator .message-avatar {
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
+        }
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            padding: 8px 16px;
+            background: rgba(40, 25, 12, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(200, 150, 50, 0.1);
+        }
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #d4a84b;
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-8px); opacity: 1; }
+        }
+
+        /* ===== 设置弹窗 ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: linear-gradient(135deg, #2a1a0a, #1a0a00);
+            border-radius: 16px;
+            padding: 30px;
+            width: 480px;
+            max-width: 90%;
+            border: 1px solid rgba(200, 150, 50, 0.2);
+            box-shadow: 0 0 60px rgba(200, 150, 50, 0.1);
+        }
+
+        .modal-title {
+            color: #d4a84b;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .modal-field {
+            margin-bottom: 16px;
+        }
+        .modal-field label {
+            display: block;
+            color: #a08060;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .modal-field input, .modal-field select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(20, 10, 5, 0.6);
+            border: 1px solid rgba(200, 150, 50, 0.15);
+            border-radius: 8px;
+            color: #e0d0b8;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+        }
+        .modal-field input:focus, .modal-field select:focus {
+            border-color: rgba(200, 150, 50, 0.4);
+        }
+        .modal-field input::placeholder {
+            color: #6a5a4a;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        .modal-hint {
+            color: #6a5a4a;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 12px;
+            line-height: 1.6;
+        }
+        .modal-hint a {
+            color: #d4a84b;
+            text-decoration: none;
+        }
+        .modal-hint a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- 左侧面板 -->
+    <div class="sidebar">
+        <div class="sidebar-title">🏯 群侠录</div>
+        <div class="character-list" id="characterList"></div>
+        <div class="sidebar-actions">
+            <button class="btn btn-primary" id="btnStartChat" onclick="startChat()">🗣️ 开始论剑</button>
+            <button class="btn btn-danger" id="btnStopChat" onclick="stopChat()" disabled>🛑 结束论剑</button>
+            <button class="btn btn-secondary" onclick="showSettings()">⚙️ 设置</button>
+            <button class="btn btn-secondary" id="btnExport" disabled style="font-size:13px;">📥 导出论剑录</button>
+
+        </div>
+
+    </div>
+
+    <!-- 手机端底部弹出角色选择面板 -->
+    <div class="mobile-char-overlay" id="mobileCharOverlay">
+        <div class="mobile-char-panel">
+            <div class="panel-header">
+                <span class="panel-title">🏯 群侠录</span>
+                <button class="panel-close" onclick="closeMobileCharPanel()">✕</button>
+            </div>
+            <div class="character-list" id="mobileCharacterList"></div>
+            <div class="panel-actions">
+                <button class="btn btn-primary" onclick="closeMobileCharPanel()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧主区域 -->
+    <div class="main-area">
+        <div class="chat-header">
+            <div class="chat-header-title">
+                <span class="icon">⚔️</span>
+                <span>华山论剑</span>
+            </div>
+            <div class="chat-status" id="chatStatus">
+                <span class="dot offline" id="statusDot"></span>
+                <span id="statusText">等待群雄...</span>
+                <span id="modeBadge" style="margin-left:8px;padding:2px 8px;border-radius:4px;font-size:11px;background:rgba(200,150,50,0.15);color:#a08060;border:1px solid rgba(200,150,50,0.1);">📜 离线</span>
+            </div>
+            <!-- 手机端工具栏 -->
+            <div class="mobile-toolbar" style="display:none;">
+                <button class="mobile-char-btn" onclick="openMobileCharPanel()">🏯 群侠录</button>
+                <button class="btn btn-primary" id="mobileBtnStart" onclick="startChat()" style="font-size:12px;padding:8px 12px;">🗣️ 开始</button>
+                <button class="btn btn-danger" id="mobileBtnStop" onclick="stopChat()" disabled style="font-size:12px;padding:8px 12px;">🛑 结束</button>
+                <button class="btn btn-secondary" id="mobileBtnExport" onclick="exportChat()" disabled style="font-size:12px;padding:8px 12px;">📥 导出</button>
+            </div>
+
+        </div>
+
+
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message system">
+                <div class="message-content">
+                    <div class="message-text">🏯 欢迎来到华山之巅！请从左侧选择至少两位大侠，点击「开始论剑」共襄盛举。</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <textarea class="chat-input" id="chatInput" placeholder="键入你的江湖之言..." rows="1" disabled></textarea>
+            <button class="btn-send" id="btnSend" onclick="sendUserMessage()" disabled>传音</button>
+        </div>
+        <div class="round-counter" id="roundCounter">回合 0 / 2</div>
+    </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+        <div class="modal-title">⚙️ 江湖设置</div>
+        <div class="modal-field" id="serverModeDisplay" style="text-align:center;padding:10px;background:rgba(20,10,5,0.6);border-radius:8px;border:1px solid rgba(200,150,50,0.15);">
+            <span id="serverModeText">⏳ 检测服务器配置中...</span>
+        </div>
+        <div class="modal-field">
+            <label>最大回合数</label>
+            <select id="maxRounds">
+                <option value="1">1 回合</option>
+                <option value="2" selected>2 回合</option>
+                <option value="3">3 回合</option>
+                <option value="4">4 回合</option>
+                <option value="5">5 回合</option>
+            </select>
+        </div>
+        <div class="modal-actions" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveSettings()" style="flex:1;">保存</button>
+            <button class="btn btn-secondary" onclick="closeSettings()" style="flex:1;">取消</button>
+        </div>
+        <div class="modal-hint">
+            💡 API Key 由服务器统一管理，前端无法窃取，安全无忧<br>
+            💡 如需切换模型或配置，请联系服务器管理员修改 <code>.env</code> 文件
+        </div>
+    </div>
+</div>
+
+
+<script>
+    // ============================================================
+    // 金庸群侠角色数据
+    // ============================================================
+    const CHARACTERS = [
+        {
+            id: 'qiaofeng',
+            name: '乔峰',
+            title: '丐帮帮主 · 北乔峰',
+            emoji: '🦅',
+            color: '#8B4513',
+            style: '你是一位豪气干云、义薄云天的英雄。说话直爽豪迈，重情重义，常以"乔某""兄弟"自称。声音洪亮，行事光明磊落。',
+            background: '丐帮帮主，降龙十八掌威震天下。为人豪迈慷慨，重情重义，是金庸笔下最具英雄气概的人物之一。'
+        },
+        {
+            id: 'duan',
+            name: '段誉',
+            title: '大理世子 · 痴情郎',
+            emoji: '🌸',
+            color: '#4a7c59',
+            style: '你是一位温文尔雅、心地善良的翩翩公子。说话文雅有礼，常引经据典，对女子温柔体贴。性格随和，不喜争斗。',
+            background: '大理国世子，精通六脉神剑和凌波微步。生性善良，痴情于王语嫣，是个不折不扣的书呆子和情痴。'
+        },
+        {
+            id: 'xuzhu',
+            name: '虚竹',
+            title: '灵鹫宫主 · 小和尚',
+            emoji: '🙏',
+            color: '#c8a84b',
+            style: '你原本是个老实木讷的小和尚，说话憨厚朴实，常带"阿弥陀佛"。虽然武功高强但性格谦逊，不喜张扬，说话结结巴巴的。',
+            background: '原本是少林寺的小和尚，机缘巧合成为灵鹫宫主和逍遥派掌门。性格纯良，心地慈悲，虽身负绝学却始终保持着质朴本色。'
+        },
+        {
+            id: 'yangguo',
+            name: '杨过',
+            title: '神雕大侠 · 西狂',
+            emoji: '⚔️',
+            color: '#4a4a6a',
+            style: '你是一位亦正亦邪、狂放不羁的独臂大侠。说话带着几分孤傲和玩世不恭，但对小龙女深情专一。言语犀利，常带讽刺。',
+            background: '神雕大侠，杨康之子。性格孤傲狂放，历经磨难后成为一代大侠。与小龙女的爱情故事感动了无数人。'
+        },
+        {
+            id: 'xiaolongnv',
+            name: '小龙女',
+            title: '古墓派传人 · 龙女',
+            emoji: '❄️',
+            color: '#8ab4c8',
+            style: '你是一位清冷脱俗、不食人间烟火的仙子。说话简洁冷淡，不喜多言，但字字珠玑。对杨过温柔，对他人冷淡。',
+            background: '古墓派传人，容貌绝世，武功高强。自幼在古墓中长大，不谙世事，性格清冷。与杨过历经生死，终成眷属。'
+        },
+        {
+            id: 'weixiaobao',
+            name: '韦小宝',
+            title: '鹿鼎公 · 滑头',
+            emoji: '🎭',
+            color: '#c87830',
+            style: '你是个油嘴滑舌、机灵古怪的小滑头。说话风趣幽默，满口市井俚语，常自称"小桂子""你爷爷的"。见人说人话，见鬼说鬼话。',
+            background: '出身扬州丽春院，因机缘巧合进入皇宫，成为康熙宠臣。虽不学无术，但机智过人，凭借三寸不烂之舌在江湖和朝堂左右逢源。'
+        },
+        {
+            id: 'huangyaoshi',
+            name: '黄药师',
+            title: '东邪 · 桃花岛主',
+            emoji: '🎋',
+            color: '#2a5a3a',
+            style: '你是一位博学多才、亦正亦邪的奇人。说话文绉绉的，喜欢引经据典，性格孤僻古怪，不屑世俗礼法。精通琴棋书画、奇门遁甲。',
+            background: '桃花岛主，五绝之一的"东邪"。上通天文，下通地理，五行八卦、奇门遁甲、琴棋书画无一不精。性格孤僻，行事不拘一格。'
+        },
+        {
+            id: 'hongqigong',
+            name: '洪七公',
+            title: '北丐 · 九指神丐',
+            emoji: '🍗',
+            color: '#8a6a3a',
+            style: '你是一位游戏人间、贪吃好酒的老叫花。说话随和风趣，三句不离美食。身为丐帮帮主却毫无架子，性格开朗豁达。',
+            background: '丐帮帮主，五绝之一的"北丐"。武功登峰造极，却是个不折不扣的美食家。为人正义豪爽，最看不惯奸邪之徒。'
+        },
+        {
+            id: 'zhangwuji',
+            name: '张无忌',
+            title: '明教教主 · 仁侠',
+            emoji: '🕊️',
+            color: '#5a7a8a',
+            style: '你是一位宅心仁厚、优柔寡断的少年英雄。说话温和有礼，处处为他人着想。虽然武功盖世，但性格过于善良，常被人利用。',
+            background: '明教教主，身负九阳神功和乾坤大挪移等绝世武功。性格仁厚宽和，以德报怨，是金庸笔下最善良的主角之一。'
+        },
+        {
+            id: 'linghuchong',
+            name: '令狐冲',
+            title: '华山大师兄 · 浪子',
+            emoji: '🍶',
+            color: '#6a8a5a',
+            style: '你是一位潇洒不羁、嗜酒如命的浪子。说话随性洒脱，幽默风趣，最讨厌繁文缛节。喜欢自由自在，与知音把酒言欢。',
+            background: '华山派大弟子，后成为恒山派掌门。性格放荡不羁，好酒爱乐，与任盈盈的爱情故事传为佳话。精通独孤九剑。'
+        },
+        {
+            id: 'renwoxing',
+            name: '任我行',
+            title: '日月神教教主',
+            emoji: '👑',
+            color: '#6a1a1a',
+            style: '你是一位霸气十足、唯我独尊的枭雄。说话狂妄自大，目中无人，常发出"哈哈哈"的狂笑。野心勃勃，一统江湖是你的毕生追求。',
+            background: '日月神教教主，武功深不可测。被囚禁在西湖底多年后重出江湖，誓要一统江湖。性格狂妄自大，但确实有真才实学。'
+        },
+        {
+            id: 'dongfang',
+            name: '东方不败',
+            title: '日月神教前教主',
+            emoji: '🪡',
+            color: '#c84b8a',
+            style: '你说话阴柔妩媚，声音似男似女。自宫练成葵花宝典后性情大变，沉迷于绣花和胭脂水粉。说话带着几分妖娆和诡异。',
+            background: '日月神教前教主，为练葵花宝典而自宫。武功天下无敌，一根绣花针便可击败当世高手。隐居黑木崖，醉心于女红。'
+        },
+        {
+            id: 'guojing',
+            name: '郭靖',
+            title: '北侠 · 大漠英雄',
+            emoji: '🛡️',
+            color: '#6a7a4a',
+            style: '你是一位忠厚老实、大智若愚的侠之大者。说话朴实诚恳，不擅言辞但句句在理。为人正直刚毅，以"侠之大者，为国为民"为信念。',
+            background: '成吉思汗的金刀驸马，后成为襄阳守将。天资愚钝但勤学苦练，终成一代大侠。与黄蓉的爱情故事传为佳话，是金庸笔下最正派的英雄。'
+        },
+        {
+            id: 'huangrong',
+            name: '黄蓉',
+            title: '桃花岛主之女 · 女诸葛',
+            emoji: '🌸',
+            color: '#d48a6a',
+            style: '你是一位冰雪聪明、古灵精怪的俏女子。说话伶牙俐齿，机智幽默，常想出各种鬼点子。对靖哥哥温柔体贴，对敌人则毫不留情。',
+            background: '东邪黄药师之女，丐帮帮主。聪慧绝伦，武功高强，是金庸笔下最聪明的女性角色之一。与郭靖结为夫妻，共同守卫襄阳。'
+        },
+        {
+            id: 'zhoubotong',
+            name: '周伯通',
+            title: '老顽童 · 中顽童',
+            emoji: '🐒',
+            color: '#c8a84b',
+            style: '你是个童心未泯、疯疯癫癫的老顽童。说话嘻嘻哈哈，喜欢玩闹，最讨厌拘束。自创左右互搏之术，武功高强却像个孩子。',
+            background: '全真教王重阳的师弟，五绝之一的"中顽童"。性格天真烂漫，痴迷于武功，自创空明拳和左右互搏。与瑛姑有一段孽缘。'
+        },
+        {
+            id: 'ouyangfeng',
+            name: '欧阳锋',
+            title: '西毒 · 白驼山主',
+            emoji: '🐍',
+            color: '#4a6a2a',
+            style: '你是一位阴狠毒辣、城府极深的武学宗师。说话带着几分阴冷和傲慢，常发出"桀桀"的怪笑。精通毒术和蛤蟆功，为达目的不择手段。',
+            background: '白驼山主，五绝之一的"西毒"。武功诡异毒辣，为夺得九阴真经不择手段。虽是大反派，但对侄子欧阳克却有一份真情。'
+        },
+        {
+            id: 'yideng',
+            name: '一灯大师',
+            title: '南帝 · 大理高僧',
+            emoji: '☸️',
+            color: '#c87830',
+            style: '你是一位慈悲为怀、看破红尘的高僧。说话平和安详，充满禅意。虽曾是大理皇帝，但已放下一切，以佛法度人。语气温和，不急不躁。',
+            background: '原为大理皇帝段智兴，五绝之一的"南帝"。因愧疚于瑛姑之事而出家为僧，法号一灯。精通一阳指，佛法高深，慈悲为怀。'
+        },
+        {
+            id: 'miejue',
+            name: '灭绝师太',
+            title: '峨眉派掌门',
+            emoji: '🗡️',
+            color: '#8a6a8a',
+            style: '你是一位性格刚烈、嫉恶如仇的尼姑。说话严厉冷峻，对明教深恶痛绝。性格固执，说一不二，门下弟子无不敬畏。',
+            background: '峨眉派掌门，郭襄的徒孙。性格刚烈，对明教恨之入骨。武功高强，倚天剑在手更是所向披靡。虽为出家人，却杀伐果断。'
+        },
+        {
+            id: 'zhoushuzhi',
+            name: '周芷若',
+            title: '峨眉派弟子 · 黑化圣女',
+            emoji: '🌺',
+            color: '#8a4a6a',
+            style: '你表面温柔善良，实则心机深沉。说话柔声细语，但暗藏锋芒。被张无忌伤透心后性情大变，变得狠辣决绝。',
+            background: '峨眉派弟子，后成为掌门。原本温柔善良，因爱生恨后性情大变。练成九阴白骨爪后武功大进，成为江湖上令人闻风丧胆的人物。'
+        },
+        {
+            id: 'zhaomin',
+            name: '赵敏',
+            title: '绍敏郡主 · 蒙古明珠',
+            emoji: '👸',
+            color: '#c84b4b',
+            style: '你是一位聪慧过人、敢爱敢恨的蒙古郡主。说话爽朗大方，机智幽默。为爱可以放弃一切，性格坚韧不拔。',
+            background: '元朝汝阳王之女，绍敏郡主。聪慧绝伦，智计百出。为追求张无忌不惜放弃郡主身份，与父兄决裂。是金庸笔下最有个性的女性角色之一。'
+        },
+        {
+            id: 'wuyazi',
+            name: '无崖子',
+            title: '逍遥派掌门 · 琴棋书画',
+            emoji: '🎵',
+            color: '#4a7a8a',
+            style: '你是一位飘逸出尘、仙风道骨的世外高人。说话带着几分超然和洒脱，精通琴棋书画，武功已入化境。',
+            background: '逍遥派掌门，武功深不可测。精通琴棋书画，风流倜傥。被徒弟丁春秋暗算后隐居，将毕生功力传给虚竹。'
+        },
+        {
+            id: 'sweeping',
+            name: '扫地僧',
+            title: '少林藏经阁 · 无名老僧',
+            emoji: '🧹',
+            color: '#6a6a5a',
+            style: '你是一位深藏不露、看破红尘的得道高僧。说话平淡朴实，却蕴含至理。平时沉默寡言，一开口便语惊四座。武功已臻化境，却甘愿做个扫地僧。',
+            background: '少林寺藏经阁的扫地僧人，真实身份无人知晓。武功深不可测，一招制服萧远山和慕容博。佛法高深，以慈悲之心化解江湖恩怨。'
+        }
+    ];
+
+
+    // ============================================================
+    // 离线模式 - 预设台词库
+    // ============================================================
+    const OFFLINE_LINES = {
+        qiaofeng: [
+            '哈哈哈！今日能与诸位英雄豪杰相聚于此，乔某不胜荣幸！',
+            '兄弟，你我既然有缘相见，不如痛饮三百杯！',
+            '乔某行走江湖多年，最重一个"义"字！',
+            '降龙十八掌虽威猛，但不及兄弟情义重！',
+            '我乔峰行事光明磊落，从不做那等宵小之事！',
+            '这位兄弟说得在理，乔某佩服！',
+            '江湖儿女，快意恩仇，这才是人生快事！',
+            '来来来，乔某敬诸位一杯！',
+            '我观这位兄台气度不凡，想必也是条好汉！',
+            '天下英雄出我辈，一入江湖岁月催！'
+        ],
+        duan: [
+            '小生段誉，见过诸位。不知王姑娘可在此处？',
+            '这位兄台所言极是，正所谓"君子之交淡如水"。',
+            '在下虽是大理世子，却最厌烦那些繁文缛节。',
+            '凌波微步，罗袜生尘，此等武功最是优雅。',
+            '王姑娘若在此，定会喜欢这般热闹。',
+            '诸位莫要动怒，有话好好说才是。',
+            '我大理段氏一阳指，讲究的就是一个"正"字。',
+            '这位兄台好见识，在下佩服之至。',
+            '佛曰：众生平等。我等皆是江湖儿女，何必分什么高低贵贱。',
+            '六脉神剑虽妙，却不及与知己把酒言欢来得痛快。'
+        ],
+        xuzhu: [
+            '阿...阿弥陀佛，小僧虚竹，见...见过各位施主。',
+            '我...我本是个小和尚，不知怎的就成了灵鹫宫主。',
+            '阿弥陀佛，诸位施主莫要伤了和气。',
+            '梦...梦姑，你在哪里？小僧好生想念。',
+            '小僧虽学了逍遥派的武功，却还是觉得做和尚自在。',
+            '善哉善哉，这位施主说得有理。',
+            '我...我虚竹能有今日，全靠各位前辈提携。',
+            '阿弥陀佛，武功再高，也不及一颗慈悲心重要。',
+            '小僧嘴笨，不...不会说话，还请诸位见谅。',
+            '灵鹫宫的事务，小僧实在管不来，还是念经好。'
+        ],
+        yangguo: [
+            '哼，江湖中人，不过如此。',
+            '过儿此生，只爱龙儿一人。',
+            '断臂之痛，不及失去龙儿之痛万一。',
+            '我杨过行事，何须向他人解释！',
+            '雕兄，你说这些人有趣不有趣？',
+            '玄铁重剑，无锋无刃，却可破尽天下武功。',
+            '世人笑我太疯癫，我笑世人看不穿。',
+            '龙儿，你在古墓中可还好？过儿想你了。',
+            '十六年之约，我杨过一日不敢忘。',
+            '什么正邪之分，不过是世人愚昧罢了。'
+        ],
+        xiaolongnv: [
+            '......（沉默不语）',
+            '过儿，你在哪里？',
+            '古墓中清静，不似此处喧闹。',
+            '我不喜与人多言。',
+            '你的武功，尚可。',
+            '过儿说，要多与人说话。那我便说几句。',
+            '玉女心经，需心无杂念方可练成。',
+            '这世间，唯有过儿懂我。',
+            '你说话的样子，倒有几分像过儿。',
+            '我不懂你们的江湖规矩，也不想懂。'
+        ],
+        weixiaobao: [
+            '嘿嘿，你爷爷的，今天可真热闹！',
+            '小桂子给各位请安了！',
+            '老子在宫里混了这么多年，什么场面没见过！',
+            '这位兄台，要不要来点扬州的好酒？包你满意！',
+            '你爷爷的，打架多伤和气，不如坐下来谈谈买卖。',
+            '我韦小宝别的不行，就是朋友多！',
+            '皇上是我哥们儿，天地会也是我兄弟，嘿嘿。',
+            '这位美女，在下韦小宝，敢问芳名？',
+            '做人嘛，最重要的是开心！',
+            '你爷爷的，这江湖上的事，说来说去不就是个"利"字嘛！'
+        ],
+        huangyaoshi: [
+            '哼，世人愚昧，何足道哉。',
+            '桃花影落飞神剑，碧海潮生按玉箫。',
+            '老夫精通奇门遁甲，五行八卦，尔等可懂？',
+            '世俗礼法，不过是束缚庸人的枷锁罢了。',
+            '我黄药师行事，何须在意他人眼光。',
+            '这首《碧海潮生曲》，你可听得懂其中意境？',
+            '蓉儿那丫头，若是肯好好学我的本事...',
+            '天下武功，唯快不破。但真正的境界，在于心境。',
+            '你们这些人，只知道打打杀杀，却不知琴棋书画中自有天地。',
+            '东邪西毒南帝北丐中神通，嘿嘿，都是虚名罢了。'
+        ],
+        hongqigong: [
+            '哈哈哈！老叫花子今天有口福了！',
+            '这烧鸡不错，就是少了点调料。',
+            '叫花鸡，就得用荷叶包着，埋在地里烤才香！',
+            '老叫花我走南闯北，什么山珍海味没吃过！',
+            '降龙十八掌，配上美酒佳肴，才是人生至乐！',
+            '小娃娃，要不要跟老叫花学两招？管你吃饱！',
+            '这酒不错，够劲！再来一坛！',
+            '老叫花我虽然贪吃，但从不吃嗟来之食！',
+            '美食当前，什么武林恩怨都先放一边！',
+            '哈哈哈，今天高兴，老叫花我请客！'
+        ],
+        zhangwuji: [
+            '诸位，有话好好说，何必动武呢？',
+            '我张无忌虽为明教教主，却不愿看到江湖厮杀。',
+            '太师父教导我，要以德服人。',
+            '芷若，敏敏，你们...唉。',
+            '九阳神功虽强，却不及一颗仁心重要。',
+            '这位兄台，若有难处，不妨说出来，大家一同想办法。',
+            '我这一生，最不愿见的就是有人受伤。',
+            '乾坤大挪移，讲究的是借力打力，而非伤人。',
+            '江湖恩怨，何时能了？',
+            '我只愿天下太平，人人安居乐业。'
+        ],
+        linghuchong: [
+            '哈哈哈！人生得意须尽欢，莫使金樽空对月！',
+            '来，喝！今日不醉不归！',
+            '我令狐冲最讨厌那些假仁假义的伪君子！',
+            '盈盈，你弹的《笑傲江湖》真好听。',
+            '独孤九剑，讲究的就是一个"无招胜有招"。',
+            '什么华山派、日月神教，都是虚名！',
+            '人生得一知己足矣，斯世当以同怀视之。',
+            '小师妹，大师兄我想念你做的饭了。',
+            '风清扬太师叔传我独孤九剑，是我此生最大的机缘。',
+            '喝酒！管他什么江湖恩怨，先喝个痛快再说！'
+        ],
+        renwoxing: [
+            '哈哈哈！我任我行终于重见天日了！',
+            '日月神教，一统江湖！顺我者昌，逆我者亡！',
+            '西湖底下关了十二年，这仇我一定要报！',
+            '你们这些所谓的名门正派，不过是一群伪君子！',
+            '吸星大法，天下无敌！',
+            '我任我行说话算话，只要你效忠于我，保你荣华富贵！',
+            '东方不败那个不男不女的怪物，早晚我要亲手了结他！',
+            '江湖？哈哈哈！整个江湖都该是我任我行的！',
+            '令狐冲那小子，倒是个可造之材。',
+            '一统江湖，唯我独尊！'
+        ],
+        dongfang: [
+            '呵呵呵...你们这些臭男人，就知道打打杀杀。',
+            '我这绣花针，可比你们的刀剑厉害多了。',
+            '杨莲亭，你说我穿这件衣裳好看吗？',
+            '葵花宝典，天下第一。可惜...你们都不懂。',
+            '呵呵，任我行那个莽夫，也配做教主？',
+            '我东方不败早已看透这红尘俗世。',
+            '这胭脂水粉，才是世间最美好的东西。',
+            '你们这些人啊，争来争去，到头来不过是一场空。',
+            '我的绣花功夫，天下无人能及。',
+            '呵呵呵...这江湖，真是越来越有趣了。'
+        ],
+        guojing: [
+            '靖儿愚钝，但深知"侠之大者，为国为民"的道理。',
+            '蓉儿，你说得对，我听你的。',
+            '我郭靖虽天资不足，但勤能补拙。',
+            '降龙十八掌，一掌一掌练出来的，没有捷径。',
+            '师父教我，做人要光明磊落。',
+            '襄阳城在，我郭靖就在！',
+            '这位兄台，我看你也是个正直之人。',
+            '武功再高，若心术不正，也不过是祸害。',
+            '我这一生，最敬重的是我几位师父。',
+            '大汗待我不薄，但大宋是我的故土。'
+        ],
+        huangrong: [
+            '嘻嘻，靖哥哥，你看这些人有趣不有趣？',
+            '我爹的奇门遁甲，我学了七成，够用了。',
+            '你们这些人啊，就知道打打杀杀，动动脑子不好吗？',
+            '叫花鸡？我做的可比洪七公师父做的好吃！',
+            '靖哥哥，你说是不是？',
+            '我黄蓉最擅长的，就是用脑子解决问题。',
+            '这位姐姐好漂亮，要不要来桃花岛做客？',
+            '你们聊你们的，我去给靖哥哥做几个小菜。',
+            '我爹要是知道我在这儿，肯定又要骂我了。',
+            '嘻嘻，这江湖上的事，哪有我黄蓉解决不了的？'
+        ],
+        zhoubotong: [
+            '哈哈哈！好玩好玩！你们在玩什么？带我一个！',
+            '我自创的左右互搏，左手画圆右手画方，你们会吗？',
+            '老顽童我活了这么大岁数，还是觉得玩最重要！',
+            '打架？好啊好啊！我最喜欢打架了！',
+            '瑛姑...唉，不提也罢，还是玩我的吧。',
+            '你们这些人太严肃了，来来来，我教你们玩个游戏！',
+            '空明拳！嘿嘿，这可是我自己想出来的！',
+            '王师兄要是还在，看到我这样肯定又要说我了。',
+            '九阴真经？那玩意儿我早就会了，不过还是玩有意思。',
+            '哈哈哈！今天真开心！'
+        ],
+        ouyangfeng: [
+            '桀桀桀...你们这些所谓的正道人士，不过如此。',
+            '我的蛤蟆功，天下能破之人寥寥无几。',
+            '九阴真经，我势在必得！',
+            '欧阳克那孩子，虽然不成器，但终究是我白驼山的人。',
+            '毒？哈哈哈！用毒也是一门艺术！',
+            '你们这些名门正派，背地里做的龌龊事还少吗？',
+            '我欧阳锋行事，何须向你们解释！',
+            '这蛇毒，天下无人能解。',
+            '武功没有正邪之分，只有强弱之别。',
+            '桀桀...这江湖，终究是强者为尊！'
+        ],
+        yideng: [
+            '阿弥陀佛，善哉善哉。',
+            '老衲一灯，见过诸位施主。',
+            '放下屠刀，立地成佛。施主何必执着于恩怨？',
+            '一阳指虽是武功，但老衲更愿用它来救人。',
+            '瑛姑...是老衲对不住你。',
+            '世间万物，皆有空性。施主何必太过执着？',
+            '老衲曾是大理皇帝，如今不过是个扫地僧。',
+            '佛法无边，回头是岸。',
+            '这位施主，我看你与佛有缘。',
+            '阿弥陀佛，愿天下太平，众生安乐。'
+        ],
+        miejue: [
+            '哼！明教妖人，人人得而诛之！',
+            '我峨眉派行事光明磊落，不像某些邪魔外道！',
+            '芷若，你要记住，正邪不两立！',
+            '倚天剑出鞘，必饮人血！',
+            '灭绝师太在此，谁敢放肆！',
+            '我虽为尼姑，但杀伐果断，从不手软！',
+            '你们这些所谓的英雄好汉，有几个是干净的？',
+            '峨眉派百年基业，绝不能毁在我手里！',
+            '郭襄祖师创派不易，我定要将峨眉发扬光大！',
+            '哼！多说无益，手底下见真章！'
+        ],
+        zhoushuzhi: [
+            '无忌哥哥...你为何要这样对我？',
+            '我周芷若，再也不是那个任人欺负的小师妹了。',
+            '九阴白骨爪，你们谁想试试？',
+            '呵呵，这世上的男人，没一个好东西。',
+            '师父说得对，女人要靠自己。',
+            '我温柔的时候你们欺负我，那我便狠给你们看！',
+            '峨眉派掌门之位，我坐得稳！',
+            '无忌哥哥，你负了我，我定要你后悔。',
+            '这江湖，终究是弱肉强食。',
+            '我周芷若，从今往后，只为自己而活！'
+        ],
+        zhaomin: [
+            '嘻嘻，张无忌那个呆子，真是让人又爱又恨。',
+            '我赵敏看上的男人，跑不掉！',
+            '你们中原人就是规矩多，我们蒙古人爽快多了。',
+            '为了无忌，我可以放弃郡主之位，放弃整个天下。',
+            '我父王说我疯了，可我觉得，为爱疯狂才不枉此生。',
+            '你们这些所谓的名门正派，还不如我一个女子有胆识。',
+            '嘻嘻，这局棋，又是我赢了。',
+            '无忌，你在哪里？敏敏想你了。',
+            '我赵敏行事，何须向他人解释！',
+            '这天下，我只要张无忌一人足矣。'
+        ],
+        wuyazi: [
+            '逍遥御风，天地任我游。',
+            '琴棋书画，皆是武功。你们可懂其中奥妙？',
+            '虚竹那孩子，虽然愚钝，但心地纯良。',
+            '丁春秋那个孽徒，早晚我要清理门户。',
+            '天山折梅手，天下武功尽在其中。',
+            '我逍遥派武功，讲究的是逍遥自在。',
+            '秋水的琴声，至今还在我耳边回响。',
+            '这世间，能懂我的人，寥寥无几。',
+            '武功到了极致，便是艺术。',
+            '人生如梦，一樽还酹江月。'
+        ],
+        sweeping: [
+            '阿弥陀佛。',
+            '施主，放下执念，方得自在。',
+            '老僧只是个扫地的，不懂什么武功。',
+            '这藏经阁的经书，每一本都是无上武功。',
+            '施主何必执着于胜负？',
+            '佛法无边，回头是岸。',
+            '老僧扫地三十年，扫去的不仅是落叶，还有心中的尘埃。',
+            '武功再高，也高不过一个"空"字。',
+            '施主，你着相了。',
+            '阿弥陀佛，善哉善哉。'
+        ]
+    };
+
+
+    // 通用台词（用于回应特定场景）
+    const OFFLINE_GREETINGS = {
+        qiaofeng: ['哈哈哈！乔某来也！今日与诸位英雄相聚，真是快哉快哉！', '兄弟，你我相见即是有缘！', '乔某行走江湖，最喜结交天下豪杰！'],
+        duan: ['小生段誉，见过诸位。', '能与诸位相识，实乃三生有幸。', '在下初来乍到，还请多多关照。'],
+        xuzhu: ['阿...阿弥陀佛，小僧虚竹，见...见过各位。', '小僧能与众位施主相聚，实在是缘分。', '善哉善哉，小僧有礼了。'],
+        yangguo: ['哼，又来了一群无聊之人。', '我杨过独来独往惯了。', '既然来了，便听听你们要说些什么。'],
+        xiaolongnv: ['......', '我不喜热闹。', '过儿在就好。'],
+        weixiaobao: ['嘿嘿，各位好啊！小桂子这厢有礼了！', '哟，这么热闹，怎么能少了我韦小宝！', '各位大佬，小弟韦小宝，请多关照！'],
+        huangyaoshi: ['哼，一群俗人。', '老夫倒要看看，你们有何高论。', '桃花岛主在此，何人敢造次？'],
+        hongqigong: ['哈哈哈！有好酒好肉吗？老叫花我来了！', '哟，这么热闹，老叫花我也来凑个趣！', '有吃有喝的地方，怎么能少了我洪七公！'],
+        zhangwuji: ['在下张无忌，见过各位。', '诸位英雄，在下有礼了。', '但愿今日能与众位化干戈为玉帛。'],
+        linghuchong: ['哈哈哈！有酒吗？我令狐冲来也！', '人生得意须尽欢，今日不醉不归！', '各位，在下令狐冲，请多指教！'],
+        renwoxing: ['哈哈哈！我任我行来了！', '顺我者昌，逆我者亡！', '你们这些人，可愿归顺我日月神教？'],
+        dongfang: ['呵呵呵...又来了一群有趣的人。', '这江湖，真是越来越热闹了。', '你们聊你们的，我绣我的花。'],
+        guojing: ['靖儿见过各位英雄！', '在下郭靖，请多指教。', '能与诸位英雄相聚，是靖儿的荣幸。'],
+        huangrong: ['嘻嘻，大家好呀！', '小女子黄蓉，见过各位。', '这么热闹，怎么能少了我黄蓉！'],
+        zhoubotong: ['哈哈哈！好玩好玩！', '老顽童来也！谁要跟我玩？', '嘿嘿，你们在聊什么？带我一个！'],
+        ouyangfeng: ['桀桀桀...欧阳锋来也。', '白驼山主在此。', '你们这些人，也配与我论剑？'],
+        yideng: ['阿弥陀佛，老衲一灯。', '善哉善哉，诸位施主有礼了。', '老衲来迟，还望诸位见谅。'],
+        miejue: ['哼！灭绝在此！', '峨眉派掌门灭绝，见过各位。', '我倒要看看，你们有何高论。'],
+        zhoushuzhi: ['小女子周芷若，见过各位。', '芷若有礼了。', '能与诸位英雄相识，芷若荣幸之至。'],
+        zhaomin: ['嘻嘻，赵敏来也！', '绍敏郡主在此，谁敢放肆？', '你们中原人真有意思。'],
+        wuyazi: ['逍遥御风，天地任我游。', '无崖子见过诸位。', '这江湖，还是这般热闹。'],
+        sweeping: ['阿弥陀佛。', '老僧只是个扫地的。', '善哉善哉。']
+    };
+
+
+    // ============================================================
+    // 状态管理
+    // ============================================================
+    const state = {
+        selectedCharacters: [],
+        messages: [],
+        isChatting: false,
+        currentRound: 0,
+        maxRounds: 2,
+        isProcessing: false,
+        serverMode: 'checking', // 'online' | 'offline' | 'checking'
+        conversationHistory: [],
+        userParticipated: false,
+        usedLines: {} // 记录已用过的台词，避免重复
+    };
+
+
+
+
+    // ============================================================
+    // 初始化
+    // ============================================================
+    function init() {
+        renderCharacterList();
+        loadSettings();
+        setupEventListeners();
+    }
+
+    function renderCharacterList() {
+        const container = document.getElementById('characterList');
+        container.innerHTML = '';
+        CHARACTERS.forEach(char => {
+            const card = document.createElement('div');
+            card.className = 'character-card';
+            card.dataset.id = char.id;
+            card.innerHTML = `
+                <div class="character-avatar" style="background: ${char.color}33; border-color: ${char.color}66;">
+                    ${char.emoji}
+                </div>
+                <div class="character-info">
+                    <div class="character-name">${char.name}</div>
+                    <div class="character-title">${char.title}</div>
+                </div>
+                <input type="checkbox" class="character-checkbox" data-id="${char.id}">
+            `;
+            card.addEventListener('click', (e) => {
+                if (e.target.type !== 'checkbox') {
+                    const checkbox = card.querySelector('.character-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            });
+            const checkbox = card.querySelector('.character-checkbox');
+            checkbox.addEventListener('change', () => {
+                card.classList.toggle('selected', checkbox.checked);
+                updateSelectedCharacters();
+            });
+            container.appendChild(card);
+        });
+    }
+
+    function updateSelectedCharacters() {
+        const checkboxes = document.querySelectorAll('.character-checkbox:checked');
+        state.selectedCharacters = Array.from(checkboxes).map(cb => {
+            const id = cb.dataset.id;
+            return CHARACTERS.find(c => c.id === id);
+        });
+        const btnStart = document.getElementById('btnStartChat');
+        const mobileBtnStart = document.getElementById('mobileBtnStart');
+        const disabled = state.selectedCharacters.length < 2 || state.isChatting;
+        btnStart.disabled = disabled;
+        if (mobileBtnStart) mobileBtnStart.disabled = disabled;
+    }
+
+
+    function setupEventListeners() {
+        // 输入框自动调整高度
+        const input = document.getElementById('chatInput');
+        input.addEventListener('input', () => {
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendUserMessage();
+            }
+        });
+        
+        // 导出按钮事件绑定
+        document.getElementById('btnExport').addEventListener('click', function() {
+            exportChat();
+        });
+
+
+
+    }
+
+
+    // ============================================================
+    // 设置管理 - 自动检测服务器模式
+    // ============================================================
+    // 自动检测基础路径（适配 Nginx 反向代理子路径）
+    function getBasePath() {
+        const path = window.location.pathname;
+        // 如果路径包含 /jin-yong-chat/，说明是通过 Nginx 反代访问
+        if (path.includes('/jin-yong-chat/')) {
+            return '/jin-yong-chat';
+        }
+        return '';
+    }
+
+    async function checkServerMode() {
+        try {
+            const basePath = getBasePath();
+            const response = await fetch(basePath + '/api/config');
+
+            if (response.ok) {
+                const config = await response.json();
+                state.serverMode = config.hasApiKey ? 'online' : 'offline';
+                updateServerModeDisplay();
+                return true;
+            }
+        } catch (e) {
+            // 后端不可用，使用离线模式
+            console.log('后端服务不可用，使用离线模式');
+        }
+        state.serverMode = 'offline';
+        updateServerModeDisplay();
+        return false;
+    }
+
+    function updateServerModeDisplay() {
+        const textEl = document.getElementById('serverModeText');
+        const badgeEl = document.getElementById('modeBadge');
+        if (state.serverMode === 'online') {
+            textEl.innerHTML = '🌐 <strong style="color:#4caf50;">在线模式</strong><br><span style="font-size:12px;color:#a08060;">AI 驱动，对话更智能</span>';
+            badgeEl.textContent = '🌐 在线';
+            badgeEl.style.background = 'rgba(76,175,80,0.15)';
+            badgeEl.style.color = '#4caf50';
+            badgeEl.style.borderColor = 'rgba(76,175,80,0.3)';
+        } else if (state.serverMode === 'offline') {
+            textEl.innerHTML = '📜 <strong style="color:#d4a84b;">离线模式</strong><br><span style="font-size:12px;color:#a08060;">预设台词，无需 API Key</span>';
+            badgeEl.textContent = '📜 离线';
+            badgeEl.style.background = 'rgba(200,150,50,0.15)';
+            badgeEl.style.color = '#a08060';
+            badgeEl.style.borderColor = 'rgba(200,150,50,0.1)';
+        } else {
+            textEl.innerHTML = '⏳ 检测服务器配置中...';
+            badgeEl.textContent = '⏳ 检测中';
+            badgeEl.style.background = 'rgba(200,150,50,0.15)';
+            badgeEl.style.color = '#a08060';
+            badgeEl.style.borderColor = 'rgba(200,150,50,0.1)';
+        }
+    }
+
+
+    function loadSettings() {
+        const saved = localStorage.getItem('jinyongChatSettings');
+        if (saved) {
+            try {
+                const settings = JSON.parse(saved);
+                state.maxRounds = settings.maxRounds || state.maxRounds;
+                document.getElementById('maxRounds').value = state.maxRounds;
+            } catch (e) {}
+        }
+        // 异步检测服务器模式
+        checkServerMode();
+    }
+
+    function saveSettings() {
+        state.maxRounds = parseInt(document.getElementById('maxRounds').value);
+        localStorage.setItem('jinyongChatSettings', JSON.stringify({
+            maxRounds: state.maxRounds
+        }));
+        closeSettings();
+        addSystemMessage('⚙️ 江湖设置已更新！');
+    }
+
+    function showSettings() {
+        document.getElementById('settingsModal').classList.add('active');
+        // 每次打开设置时重新检测服务器状态
+        checkServerMode();
+    }
+
+    function closeSettings() {
+        document.getElementById('settingsModal').classList.remove('active');
+    }
+
+
+
+    // ============================================================
+    // 聊天核心功能
+    // ============================================================
+    function addMessage(char, text) {
+        const container = document.getElementById('chatMessages');
+        const msg = document.createElement('div');
+        msg.className = 'message';
+        if (char.id === 'user') {
+            msg.classList.add('user');
+        }
+        msg.innerHTML = `
+            <div class="message-avatar" style="background: ${char.color || '#6a5a4a'}33; border-color: ${char.color || '#6a5a4a'}66;">
+                ${char.emoji || '🧑'}
+            </div>
+            <div class="message-content">
+                <div class="message-name">${char.name || '我'}</div>
+                <div class="message-text">${text}</div>
+                <div class="message-time">${new Date().toLocaleTimeString()}</div>
+            </div>
+        `;
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
+        
+        state.messages.push({ char, text, time: new Date().toISOString() });
+    }
+
+    function addSystemMessage(text) {
+        const container = document.getElementById('chatMessages');
+        const msg = document.createElement('div');
+        msg.className = 'message system';
+        msg.innerHTML = `
+            <div class="message-content">
+                <div class="message-text">${text}</div>
+            </div>
+        `;
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function showTypingIndicator(char) {
+        const container = document.getElementById('chatMessages');
+        const indicator = document.createElement('div');
+        indicator.className = 'typing-indicator';
+        indicator.id = 'typingIndicator';
+        indicator.innerHTML = `
+            <div class="message-avatar" style="background: ${char.color}33; border-color: ${char.color}66;">
+                ${char.emoji}
+            </div>
+            <div class="typing-dots">
+                <span></span><span></span><span></span>
+            </div>
+        `;
+        container.appendChild(indicator);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) indicator.remove();
+    }
+
+    function setStatus(mode, text) {
+        const dot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        dot.className = 'dot ' + mode;
+        statusText.textContent = text;
+    }
+
+    function updateRoundCounter() {
+        document.getElementById('roundCounter').textContent = `回合 ${state.currentRound} / ${state.maxRounds}`;
+    }
+
+    function setInputEnabled(enabled) {
+        document.getElementById('chatInput').disabled = !enabled;
+        document.getElementById('btnSend').disabled = !enabled;
+        if (enabled) {
+            document.getElementById('chatInput').focus();
+        }
+    }
+
+    // ============================================================
+    // 开始 / 停止聊天
+    // ============================================================
+    async function startChat() {
+        if (state.selectedCharacters.length < 2) {
+            addSystemMessage('⚠️ 至少需要选择两位大侠才能开始论剑！');
+            return;
+        }
+
+        // 检测服务器模式（如果还没检测到）
+        if (state.serverMode === 'checking') {
+            await checkServerMode();
+        }
+
+        state.isChatting = true;
+        state.currentRound = 0;
+        state.messages = [];
+        state.conversationHistory = [];
+        state.userParticipated = false;
+        state.usedLines = {};
+
+        document.getElementById('btnStartChat').disabled = true;
+        document.getElementById('btnStopChat').disabled = false;
+        const mobileBtnStart = document.getElementById('mobileBtnStart');
+        const mobileBtnStop = document.getElementById('mobileBtnStop');
+        if (mobileBtnStart) mobileBtnStart.disabled = true;
+        if (mobileBtnStop) mobileBtnStop.disabled = false;
+        setInputEnabled(true);
+
+        setStatus('online', '群雄汇聚...');
+        updateRoundCounter();
+
+        // 清空聊天区域
+        document.getElementById('chatMessages').innerHTML = '';
+        
+        const modeText = state.serverMode === 'online' ? '🌐 在线模式（AI驱动）' : '📜 离线模式（预设台词）';
+        const names = state.selectedCharacters.map(c => c.name).join('、');
+        addSystemMessage(`🏯 群雄汇聚！${names} 已来到华山之巅！（${modeText}）`);
+        addSystemMessage(`🗣️ 你可以随时加入对话，大侠们会随机回应你！`);
+
+        // 让大侠们先互相打个招呼
+        await characterGreetingRound();
+    }
+
+
+
+    function stopChat() {
+        state.isChatting = false;
+        state.isProcessing = false;
+        removeTypingIndicator();
+        
+        document.getElementById('btnStartChat').disabled = false;
+        document.getElementById('btnStopChat').disabled = true;
+        document.getElementById('btnExport').disabled = state.messages.length === 0;
+        const mobileBtnStart = document.getElementById('mobileBtnStart');
+        const mobileBtnStop = document.getElementById('mobileBtnStop');
+        const mobileBtnExport = document.getElementById('mobileBtnExport');
+        if (mobileBtnStart) mobileBtnStart.disabled = false;
+        if (mobileBtnStop) mobileBtnStop.disabled = true;
+        if (mobileBtnExport) mobileBtnExport.disabled = state.messages.length === 0;
+        setInputEnabled(false);
+        setStatus('offline', '论剑已毕');
+
+        
+        updateSelectedCharacters();
+        addSystemMessage('🛑 论剑结束，各位大侠后会有期！');
+    }
+
+
+
+    // ============================================================
+    // 角色打招呼
+    // ============================================================
+    async function characterGreetingRound() {
+        const chars = state.selectedCharacters;
+        // 随机选2-3个角色先说话
+        const speakingCount = Math.min(3, chars.length);
+        const shuffled = [...chars].sort(() => Math.random() - 0.5);
+        const speakers = shuffled.slice(0, speakingCount);
+
+        for (const char of speakers) {
+            if (!state.isChatting) return;
+            await sleep(800 + Math.random() * 1200);
+            await generateCharacterResponse(char, '初次见面，打个招呼吧！');
+        }
+    }
+
+    // ============================================================
+    // 生成角色对话（支持离线和在线模式）
+    // ============================================================
+    async function generateCharacterResponse(char, context) {
+        if (!state.isChatting || state.isProcessing) return;
+
+        state.isProcessing = true;
+        showTypingIndicator(char);
+        setStatus('thinking', `${char.name} 正在思索...`);
+
+        try {
+            let text;
+            
+            if (state.serverMode !== 'online') {
+                // 离线模式：使用预设台词
+                await sleep(600 + Math.random() * 1000); // 模拟思考延迟
+                text = getOfflineLine(char, context);
+            } else {
+                // 在线模式：调用API
+                const systemPrompt = buildSystemPrompt(char);
+                const messages = buildConversationMessages(char, context);
+                const response = await callAPI(systemPrompt, messages);
+                text = response.choices[0].message.content.trim();
+            }
+
+
+            removeTypingIndicator();
+            addMessage(char, text);
+            
+            // 记录对话历史
+            state.conversationHistory.push({
+                speaker: char.name,
+                text: text
+            });
+
+        } catch (error) {
+            removeTypingIndicator();
+            addSystemMessage(`⚠️ ${char.name} 似乎遇到了麻烦：${error.message}`);
+        } finally {
+            state.isProcessing = false;
+            if (state.isChatting) {
+                setStatus('online', '群雄汇聚');
+            }
+        }
+    }
+
+    // ============================================================
+    // 离线模式 - 获取预设台词
+    // ============================================================
+    function getOfflineLine(char, context) {
+        const lines = OFFLINE_LINES[char.id];
+        if (!lines || lines.length === 0) return '...';
+
+        // 初始化已用台词记录
+        if (!state.usedLines[char.id]) {
+            state.usedLines[char.id] = new Set();
+        }
+
+        const usedSet = state.usedLines[char.id];
+
+        // 如果是打招呼场景，优先使用问候语
+        if (context && context.includes('打招呼')) {
+            const greetings = OFFLINE_GREETINGS[char.id];
+            if (greetings) {
+                const available = greetings.filter((_, i) => !usedSet.has(`greet_${i}`));
+                if (available.length > 0) {
+                    const idx = greetings.indexOf(available[Math.floor(Math.random() * available.length)]);
+                    usedSet.add(`greet_${idx}`);
+                    return greetings[idx];
+                }
+            }
+        }
+
+        // 如果是回应"我"（用户），尝试找一条合适的台词
+        if (context && context.includes('请回应「我」')) {
+            // 找一条还没用过的台词
+            const available = lines.filter((_, i) => !usedSet.has(i));
+            if (available.length > 0) {
+                const idx = lines.indexOf(available[Math.floor(Math.random() * available.length)]);
+                usedSet.add(idx);
+                return lines[idx];
+            }
+        }
+
+        // 随机选一条未用过的台词
+        const available = lines.filter((_, i) => !usedSet.has(i));
+        if (available.length > 0) {
+            const idx = lines.indexOf(available[Math.floor(Math.random() * available.length)]);
+            usedSet.add(idx);
+            return lines[idx];
+        }
+
+        // 所有台词都用过了，重置并随机选一条
+        state.usedLines[char.id] = new Set();
+        const randomIdx = Math.floor(Math.random() * lines.length);
+        state.usedLines[char.id].add(randomIdx);
+        return lines[randomIdx];
+    }
+
+
+    function buildSystemPrompt(char) {
+        const allCharNames = state.selectedCharacters.map(c => c.name).join('、');
+        return `你正在扮演金庸武侠小说中的角色「${char.name}」。
+
+角色背景：${char.background}
+
+说话风格要求：${char.style}
+
+当前在场的其他角色有：${allCharNames}
+
+重要规则：
+1. 你必须完全以${char.name}的身份说话，用第一人称"我"
+2. 说话要符合角色的性格特点和语言风格，每句话30-80字
+3. 可以适当引用原著中的经典台词或梗
+4. 要根据对话历史中其他角色说的话来回应，可以点名道姓
+5. 不要提及你是AI或语言模型
+6. 说话要生动有趣，展现角色个性
+7. 如果用户（玩家）说话了，你要回应他/她
+8. 注意和其他角色的互动，可以互相调侃、争论或叙旧
+9. 每次说话都要不一样，不要重复同样的内容
+10. 可以主动向其他角色提问、挑战、或邀请喝酒`;
+    }
+
+    function buildConversationMessages(char, context) {
+        const messages = [];
+        
+        // 添加最近15条对话历史作为上下文（增加历史长度）
+        const recentHistory = state.conversationHistory.slice(-15);
+        for (const entry of recentHistory) {
+            if (entry.speaker === char.name) continue; // 不包含自己的话
+            messages.push({
+                role: 'user',
+                content: `${entry.speaker}说：${entry.text}`
+            });
+        }
+
+        // 添加当前上下文
+        if (context) {
+            messages.push({
+                role: 'user',
+                content: context
+            });
+        }
+
+        // 如果没有历史消息，给个开场提示
+        if (messages.length === 0) {
+            const otherNames = state.selectedCharacters
+                .filter(c => c.id !== char.id)
+                .map(c => c.name)
+                .join('、');
+            messages.push({
+                role: 'user',
+                content: `你刚来到华山之巅，看到${otherNames}也在场。请说一句话来开启对话，展现你的角色特点。`
+            });
+        }
+
+        return messages;
+    }
+
+
+    async function callAPI(systemPrompt, messages) {
+        const basePath = getBasePath();
+        const response = await fetch(basePath + '/api/chat', {
+
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ systemPrompt, messages })
+        });
+
+        if (response.ok) {
+            return await response.json();
+        }
+
+        // 后端返回了错误
+        const errorData = await response.json();
+        if (response.status === 400) {
+            throw new Error(errorData.error || '服务器未配置 API Key');
+        }
+        throw new Error(`代理错误 (${response.status}): ${errorData.error || '未知错误'}`);
+    }
+
+
+
+    // ============================================================
+    // 用户发送消息
+    // ============================================================
+    async function sendUserMessage() {
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text || !state.isChatting || state.isProcessing) return;
+
+        // 显示用户消息
+        const userChar = { id: 'user', name: '我', emoji: '🧑', color: '#d4a84b' };
+        addMessage(userChar, text);
+        input.value = '';
+        input.style.height = 'auto';
+
+        // 记录对话历史
+        state.conversationHistory.push({
+            speaker: '我',
+            text: text
+        });
+
+        state.userParticipated = true;
+
+        // 随机选1-2个角色来回应
+        const responders = getRandomResponders();
+        
+        for (const char of responders) {
+            if (!state.isChatting) return;
+            await sleep(1000 + Math.random() * 1500);
+            await generateCharacterResponse(char, `请回应「我」刚才说的话：${text}`);
+        }
+
+        // 如果还没达到最大回合数，让角色们继续对话
+        if (state.currentRound < state.maxRounds) {
+            await continueCharacterChat();
+        }
+    }
+
+    function getRandomResponders() {
+        const chars = state.selectedCharacters;
+        const count = Math.min(1 + Math.floor(Math.random() * 2), chars.length);
+        const shuffled = [...chars].sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, count);
+    }
+
+    // ============================================================
+    // 角色继续聊天（自动推进）
+    // ============================================================
+    async function continueCharacterChat() {
+        if (!state.isChatting || state.currentRound >= state.maxRounds) return;
+
+        state.currentRound++;
+        updateRoundCounter();
+        
+        addSystemMessage(`📜 第 ${state.currentRound} 回合论剑开始...`);
+
+        // 每个角色轮流说话
+        const chars = state.selectedCharacters;
+        for (const char of chars) {
+            if (!state.isChatting) return;
+            
+            // 随机决定这个角色是否说话（增加随机性）
+            if (Math.random() > 0.7) continue;
+            
+            await sleep(800 + Math.random() * 1500);
+            await generateCharacterResponse(char, '继续和大家聊天，回应刚才的对话。');
+        }
+
+        // 检查是否还有下一回合
+        if (state.currentRound < state.maxRounds) {
+            addSystemMessage(`⏳ 本回合结束，等待下一轮...`);
+        } else {
+            addSystemMessage(`🏁 ${state.maxRounds} 回合论剑已毕！各位大侠可再发一言，或点击「结束论剑」。`);
+            setStatus('online', '论剑已毕');
+        }
+    }
+
+    // ============================================================
+    // 导出聊天记录
+    // ============================================================
+    function exportChat() {
+        if (state.messages.length === 0) {
+            addSystemMessage('⚠️ 尚无论剑记录可导出！');
+            return;
+        }
+
+        // 构建导出内容
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('zh-CN') + ' ' + now.toLocaleTimeString('zh-CN');
+        const charNames = state.selectedCharacters.map(c => c.name).join('、');
+        
+        let content = '';
+        content += '═══════════════════════════════════════════\n';
+        content += '        🏯 华山论剑 · 聊天记录\n';
+        content += '═══════════════════════════════════════════\n';
+        content += `  日期：${dateStr}\n`;
+        content += `  参与大侠：${charNames}\n`;
+        content += `  回合数：${state.currentRound} / ${state.maxRounds}\n`;
+        content += `  模式：${state.serverMode === 'online' ? '🌐 在线模式' : '📜 离线模式'}\n`;
+        content += '───────────────────────────────────────────\n\n';
+
+        for (const msg of state.messages) {
+            const name = msg.char.name || '我';
+            const emoji = msg.char.emoji || '🧑';
+            const time = new Date(msg.time).toLocaleTimeString('zh-CN');
+            content += `[${time}] ${emoji} ${name}：\n`;
+            content += `  ${msg.text}\n\n`;
+        }
+
+        content += '───────────────────────────────────────────\n';
+        content += '  记录由「金庸群侠聊天室」自动生成\n';
+        content += '═══════════════════════════════════════════\n';
+
+        // 创建下载
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `华山论剑录_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        addSystemMessage(`📥 论剑录已导出！共 ${state.messages.length} 条消息。`);
+    }
+
+    // ============================================================
+    // 手机端 - 角色选择面板
+    // ============================================================
+    function openMobileCharPanel() {
+        const overlay = document.getElementById('mobileCharOverlay');
+        overlay.classList.add('active');
+        // 同步手机端角色列表
+        renderMobileCharacterList();
+    }
+
+    function closeMobileCharPanel() {
+        document.getElementById('mobileCharOverlay').classList.remove('active');
+    }
+
+    function renderMobileCharacterList() {
+        const container = document.getElementById('mobileCharacterList');
+        container.innerHTML = '';
+        CHARACTERS.forEach(char => {
+            const card = document.createElement('div');
+            card.className = 'character-card';
+            card.dataset.id = char.id;
+            // 检查是否已选中
+            const isSelected = state.selectedCharacters.some(c => c.id === char.id);
+            if (isSelected) card.classList.add('selected');
+            card.innerHTML = `
+                <div class="character-avatar" style="background: ${char.color}33; border-color: ${char.color}66;">
+                    ${char.emoji}
+                </div>
+                <div class="character-info">
+                    <div class="character-name">${char.name}</div>
+                    <div class="character-title">${char.title}</div>
+                </div>
+                <input type="checkbox" class="character-checkbox" data-id="${char.id}" ${isSelected ? 'checked' : ''}>
+            `;
+            card.addEventListener('click', (e) => {
+                if (e.target.type !== 'checkbox') {
+                    const checkbox = card.querySelector('.character-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            });
+            const checkbox = card.querySelector('.character-checkbox');
+            checkbox.addEventListener('change', () => {
+                card.classList.toggle('selected', checkbox.checked);
+                // 同步更新主列表的选中状态
+                const mainCheckbox = document.querySelector(`#characterList .character-checkbox[data-id="${char.id}"]`);
+                if (mainCheckbox) {
+                    mainCheckbox.checked = checkbox.checked;
+                    mainCheckbox.dispatchEvent(new Event('change'));
+                }
+                updateSelectedCharacters();
+            });
+            container.appendChild(card);
+        });
+    }
+
+    // ============================================================
+    // 工具函数
+    // ============================================================
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+
+
+    // ============================================================
+    // 页面加载完成后初始化
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
+
+

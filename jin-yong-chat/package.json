@@ -1,0 +1,19 @@
+{
+  "name": "jin-yong-chat",
+  "version": "1.0.0",
+  "description": "金庸群侠聊天室 - 华山论剑",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["金庸", "聊天室", "武侠"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}
