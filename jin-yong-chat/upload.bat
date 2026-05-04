@@ -9,7 +9,7 @@ echo ============================================
 echo.
 
 REM ===== CONFIG =====
-set SERVER_IP=111.229.187.119
+set SERVER_IP=SERVER_IP
 set SSH_USER=ubuntu
 set SSH_PORT=22
 set REMOTE_PATH=/var/www/html/jin-yong-chat
