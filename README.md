@@ -122,7 +122,7 @@ jin-yong-chat/
 项目
 值
 服务器 IP
-111.229.187.119
+****
 SSH 用户
 ubuntu
 SSH 端口
@@ -132,9 +132,9 @@ SSH 端口
 服务端口
 8079
 访问地址
-http://111.229.187.119:8079
+http://127.0.0.1:8079
 Nginx 反代
-http://111.229.187.119/jin-yong-chat
+http://127.0.0.1/jin-yong-chat
 
 Nginx 配置
 配置文件：/etc/nginx/sites-enabled/ap-automation.conf
